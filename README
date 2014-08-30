@@ -2,6 +2,16 @@ Documentation for Unix tail
 =====================================
 
 +-------+
+| IDEA  |
++-------+
+1. "-n"
+Let file pointer points to the end of the file, then we go back to the beginning of the file. By counting the number of '\n', we can know how many lines we have passed. We stop once the lines counter has reached n. Then from that position, print one char a time until EOF. Thus, no extra memory is needed. Need to consider the number of lines in test file is less than argument n.
+
+2. "-f"
+Keep track of file size of all files. If the size of file increased, then move the file pointer to the previous file size position, and then print one char a time till EOF. It ganrantees all chars are newly added. 
+
+
++-------+
 | BUILD |
 +-------+
 put Makefile, tail.h tail.c under the same directory,
@@ -12,21 +22,30 @@ put Makefile, tail.h tail.c under the same directory,
 +-------+
 | TESTS |
 +-------+
+Test environment: Ubuntu 12.04 in VirtualBox
+Explaination: 
+1. To test -f, you need to add new lines into file "test", then save it, then you can see the result in terminal. It updates one second a time.
+2. Use interrupt:control+c to terminate the process.
+
 > ./tail test
 > ./tail test test
 > ./tail -n 5 test
+> ./tail -n 15 test
+> ./tail -n 25 test
 > ./tail -n 5 test test
-
+> ./tail -n 10 -n -5 test
+> ./tail -n 10 -n -5 test test
+> ./tail -f test
+> ./tail -n 5 -f test
+> ./tail -n 5 test -f
+> ./tail -f test test
 
 +------+
 | BUGS |
 +------+
-no bugs so far
+There was a bug in gedit, which added a new '\n' in test file. It took me a while to fix it.
 
 +-------+
 | OTHER |
 +-------+
-
-When the user presses control + C, my program will cancel thread: arrival and token depositing,
-and then the handler will wait for the last packet to finish serving using while loop. There should
-be a better way do it.
+For the purpose of argument "-f", all input files should be treated in a single process, thus we can check the results in a clear way. So, an improvement of my solution is to use multi-threading.

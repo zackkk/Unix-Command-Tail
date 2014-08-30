@@ -135,7 +135,10 @@ int main(int argc, char *argv[]){
 		fseek(fp, 0, SEEK_END);
 		int sz = ftell(fp);
 		files_prev_size[i] = sz;
-		printf("==> %s <==\n",files[i]);
+		/* print head to separate files */
+		if(g_file_num > 1){
+			printf("\n==> %s <==\n",files[i]);
+		}
 		tail_n_lines_print(fp, g_argument_n, files_prev_size[i]);
 		fflush(stdout);
 		fclose(fp);
