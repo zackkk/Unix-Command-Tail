@@ -66,6 +66,7 @@ void follow_print(char *inputFileName){
 		// file size keeps growing
 		
 		if(sz > g_prev_file_size) {
+	
 			fseek(fp, g_prev_file_size, SEEK_SET);
 			char c;
 			while((c = fgetc(fp)) != EOF){ 

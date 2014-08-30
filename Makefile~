@@ -1,0 +1,8 @@
+tail: tail.o 
+	gcc -g -o tail.o 
+
+tail.o: tail.c 
+	gcc -g -c -Wall tail.c 
+
+clean:
+	rm -f *.o *.gch tail
