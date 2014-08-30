@@ -1,0 +1,30 @@
+Documentation for Unix tail
+=====================================
+
++-------+
+| BUILD |
++-------+
+put Makefile, tail.h tail.c under the same directory,
+> make clean
+> make 
+> ./tail [-h / -f] ... [FILE] ...
+
++-------+
+| TESTS |
++-------+
+> ./tail test
+> ./tail test test
+> ./tail -n 5 test
+
++------+
+| BUGS |
++------+
+no bugs so far
+
++-------+
+| OTHER |
++-------+
+
+When the user presses control + C, my program will cancel thread: arrival and token depositing,
+and then the handler will wait for the last packet to finish serving using while loop. There should
+be a better way do it.

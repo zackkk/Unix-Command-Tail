@@ -4,7 +4,6 @@
  *   DESC: Unix command tail (-n, -f)
  */
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
@@ -15,99 +14,76 @@
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
+#include "tail.h"
 
-#define FALSE 0
-#define TRUE 1
-#define FILE_NUM_LIMIT 10
-#define FILE_NAME_SIZE 20
 
-int g_print_line_num = 0;
-int g_follow = FALSE;
-int g_prev_file_size = 0;
-int g_file_num = 0;
-
-// move fp backward, count the number of '\n', 
-// use letterCount to check the corner case: the num of existing lines < n;
-void tail_n_lines_print(FILE *fp, int n){
-	//char *buffer = malloc[BUFFERSIZE];
+void tail_n_lines_print(FILE *fp, int n, int file_prev_size){
 	int relativeToEnd = -1;
 	int lineCount = 1;
 	char c;	
-	printf("g_prev_file_size: %d\n", g_prev_file_size);	
-	while( -relativeToEnd <= g_prev_file_size && lineCount <= n){
+
+	/* check if it has reached the beginning frontier. */
+	while( -relativeToEnd <= file_prev_size && lineCount <= n){
 		fseek(fp, relativeToEnd, SEEK_END);
 		c = fgetc(fp);
-		//printf("%c", c);
 		if(c == '\n') lineCount++;
 		relativeToEnd--;
 	}
-	// adjust pointer in the file (not *fp) if it exceeds the beginning frontier.
-	if( -relativeToEnd  > g_prev_file_size){
+	/* adjust pointer in the file (not *fp) if it exceeds the beginning frontier. */
+	if( -relativeToEnd  > file_prev_size){
 		relativeToEnd++;
 		fseek(fp, relativeToEnd, SEEK_END);
 	}
 	
+	/* print char until it reached the end of file */
 	while((c = fgetc(fp)) != EOF){ 
 		printf("%c",c);
-		fflush(stdout);
 	}
 }
 
-void follow_print(char *inputFileName){
-	while(TRUE){
-		usleep(2000000); // sleep one second, avoid busy wait;
-		FILE *fp = fopen(inputFileName,"r");
-		if(fp == NULL){	
-			fprintf(stderr, "File doesn't exist\n");
-			exit(-1);
-		}
-		fseek(fp, 0, SEEK_END);
-		int sz = ftell(fp);
-		// file size keeps growing
-		
-		if(sz > g_prev_file_size) {
+void follow_print(char *inputFileName, int *file_prev_size){
 	
-			fseek(fp, g_prev_file_size, SEEK_SET);
-			char c;
-			while((c = fgetc(fp)) != EOF){ 
-				printf("%c",c);
-			}
-			// update previous file size
-			g_prev_file_size = sz;
-		}
-		fclose(fp);
+	FILE *fp = fopen(inputFileName,"r");
+	if(fp == NULL){	
+		fprintf(stderr, "File doesn't exist\n");
+		return;
 	}
+	fseek(fp, 0, SEEK_END);
+	int sz = ftell(fp);
+
+	/* if the file size has increased */
+	if(sz > *file_prev_size) {
+		fseek(fp, *file_prev_size, SEEK_SET);
+		char c;
+		/* print the newly added chars */
+		while((c = fgetc(fp)) != EOF){ 
+			printf("%c",c);
+		}
+		
+	}
+	/* update previous file size */
+	*file_prev_size = sz;
+	fclose(fp);
+	
 }
 
-int main(int argc, char *argv[]){
+void argument_process(int argc, char *argv[]){
 	int i = 0;
-	/* assert the first argument is "./tail" */
-	assert(strcmp(argv[0], "./tail") == 0);
-
-	/* initialization */
-	char files[FILE_NUM_LIMIT][FILE_NAME_SIZE];
-	i = 0;
-	for(; i < FILE_NUM_LIMIT; i++){
-		strcpy(files[i], "");
-	}
-	/* default value of the number of lines */
-	g_print_line_num = 10;
-
 	/* check all arguments */
-	i = 1;
-	for(; i < argc; i++){ 
+	for(i = 1; i < argc; i++){ 
+		
 		/* case 1: the argument is "-n", then it must followed by a number */
 		if(strcmp(argv[i], "-n") == 0){
 			if(i + 1 < argc){
 				/* if -n is specified multiple times, then it would cover the previous one */
-				g_print_line_num = atoi(argv[i+1]);
-				if(g_print_line_num == 0){ 
+				g_argument_n = atoi(argv[i+1]);
+				if(g_argument_n == 0){ 
 					fprintf(stderr, "Invalid parameter of -n\n");
 					exit(-1);
 				}
 				/* treat it as its absolute value if it is negative */
-				else if(g_print_line_num < 0){ 
-					g_print_line_num = -g_print_line_num;
+				else if(g_argument_n < 0){ 
+					g_argument_n = -g_argument_n;
 				}
 				/* it takes two arguments one time */
 				i++;
@@ -120,7 +96,7 @@ int main(int argc, char *argv[]){
 		}
 		/* case 2: the argument is "-f" */
 		else if(strcmp(argv[i], "-f") == 0){
-			g_follow = TRUE;	
+			g_argument_f = TRUE;	
 		}
 		/* case 3: the argument is a file name */
 		else{
@@ -128,11 +104,28 @@ int main(int argc, char *argv[]){
 			g_file_num++;
 		}
 	}
+}
+
+int main(int argc, char *argv[]){
+	int i = 0;
+	/* assert the first argument is "./tail" */
+	assert(strcmp(argv[0], "./tail") == 0);
+
+	/* initialization */
+	int files_prev_size[FILE_NUM_LIMIT];
+	for(i = 0; i < FILE_NUM_LIMIT; i++){
+		strcpy(files[i], "");
+		files_prev_size[i] = 0;
+	}
+
+	/* default value of the number of lines */
+	g_argument_n = 10;
+
+	/* process arguments */
+	argument_process(argc, argv);
 
 	/* handle multiple file inputs */
-	i = 0;
-	fflush(stdout);
-	for( ; i < g_file_num; i++){ 
+	for(i = 0; i < g_file_num; i++){ 
 		FILE *fp = fopen(files[i],"r");
 		if(fp == NULL){	
 			fprintf(stderr, "File doesn't exist\n");
@@ -141,19 +134,22 @@ int main(int argc, char *argv[]){
 		/* get file size */
 		fseek(fp, 0, SEEK_END);
 		int sz = ftell(fp);
-		g_prev_file_size = sz;
+		files_prev_size[i] = sz;
 		printf("==> %s <==\n",files[i]);
-		fflush(stdout);
-		tail_n_lines_print(fp, g_print_line_num);
+		tail_n_lines_print(fp, g_argument_n, files_prev_size[i]);
 		fclose(fp);
 	}
 	
-	i = 0;
-	if(g_follow){
-		for( ; i < g_file_num; i++){ 
-			/* if -f is specified */
-			fflush(stdout);
-			follow_print(files[i]); 
+	fflush(stdout);
+	/* if the argument f is specified */
+	if(g_argument_f){
+		while(TRUE){
+			for(i = 0; i < g_file_num; i++){ 
+				follow_print(files[i], &files_prev_size[i]); 
+				fflush(stdout);
+			}
+			/* sleep for one second */
+			usleep(1000000);			
 		}
 	}
 	return 0;

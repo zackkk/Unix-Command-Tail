@@ -1,0 +1,27 @@
+#ifndef _TAIL_H_
+#define _TAIL_H_
+
+#define FALSE 0
+#define TRUE 1
+#define FILE_NUM_LIMIT 10
+#define FILE_NAME_SIZE 20
+
+/* global variables*/
+int g_argument_n = 0;  /* the value of argument -n */
+int g_argument_f = FALSE; /* if argument f is specified */
+int g_file_num = 0; /* the number of files that are going to be processed */ 
+char files[FILE_NUM_LIMIT][FILE_NAME_SIZE]; /* files' name in the arguments */
+
+/* start from the end, move fp backward, count the number of '\n'. */
+void tail_n_lines_print(FILE *fp, int n, int file_prev_size);
+
+/* 
+ * print the following chars if the size of the file has increased,
+ * it is used for monitoring log files, update every one second.
+ */
+void follow_print(char *inputFileName, int *file_prev_size);
+
+/* process the arguments from terminal */
+void argument_process(int argc);
+
+#endif
