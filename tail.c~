@@ -137,7 +137,7 @@ int main(int argc, char *argv[]){
 		files_prev_size[i] = sz;
 		/* print head to separate files */
 		if(g_file_num > 1){
-			printf("==> %s <==\n",files[i]);
+			printf("\n==> %s <==\n",files[i]);
 		}
 		tail_n_lines_print(fp, g_argument_n, files_prev_size[i]);
 		fflush(stdout);

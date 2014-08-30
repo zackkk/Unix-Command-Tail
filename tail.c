@@ -1,6 +1,7 @@
 /*
  *	 FILE: tail.c
- * AUTHOR: Zack
+ * AUTHOR: Zack (Zhe Xie)
+ *   TIME: 08/30/2014, doing my Master's at USC.
  *   DESC: Unix command tail (-n, -f)
  */
 
